@@ -6,14 +6,18 @@ const jobsList = document.getElementById("jobsList");
 const jobCount = document.getElementById("jobCount");
 const clearAllBtn = document.getElementById("clearAllBtn");
 const downloadCsvBtn = document.getElementById("downloadCsvBtn");
+const autoDetectionToggle = document.getElementById("autoDetectionToggle");
 const successMessage = document.getElementById("successMessage");
 
 // Load jobs from storage and display them
 function loadJobs() {
-  chrome.storage.local.get(["jobs"], (data) => {
+  chrome.storage.local.get(["jobs", "autoDetectionEnabled"], (data) => {
     const jobs = data.jobs || [];
     displayJobs(jobs);
     updateJobCount(jobs.length);
+    
+    // Set auto-detection toggle state
+    autoDetectionToggle.checked = data.autoDetectionEnabled !== false; // Default to true
   });
 }
 
@@ -171,12 +175,23 @@ function formatDateForCSV(dateString) {
   });
 }
 
+// Toggle auto-detection
+function toggleAutoDetection() {
+  const enabled = autoDetectionToggle.checked;
+  chrome.storage.local.set({ autoDetectionEnabled: enabled }, () => {
+    successMessage.textContent = enabled ? "Auto-detection enabled" : "Auto-detection disabled";
+    showSuccessMessage();
+  });
+}
+
 // Event listeners
 addJobBtn.addEventListener("click", addJob);
 
 clearAllBtn.addEventListener("click", clearAllJobs);
 
 downloadCsvBtn.addEventListener("click", downloadCSV);
+
+autoDetectionToggle.addEventListener("change", toggleAutoDetection);
 
 // Allow Enter key to submit
 companyInput.addEventListener("keypress", (e) => {
