@@ -3,6 +3,8 @@ console.log("[JobLogger] Content script loaded");
 (function () {
   let isEnabled = true;
   let isShowingPopup = false;
+  let lastJobUrl = null;
+  let lastJobInfo = null;
 
   // Check if auto-detection is enabled
   function checkEnabled() {
@@ -11,24 +13,47 @@ console.log("[JobLogger] Content script loaded");
     });
   }
 
-  // Check if we're on a job application page
+  // Check if we're on a job application page (more specific)
   function isJobApplicationPage() {
     const pathname = window.location.pathname.toLowerCase();
     const hostname = window.location.hostname.toLowerCase();
     const title = document.title.toLowerCase();
     
-    // Job-related keywords
-    const jobKeywords = [
-      "job", "jobs", "career", "careers", "apply", "application", 
-      "position", "opening", "opportunity", "employment"
+    // More specific job application keywords
+    const applicationKeywords = [
+      "apply", "application", "submit application", "job application",
+      "careers/apply", "jobs/apply", "apply-now", "applynow"
     ];
     
-    // Check URL and title for job keywords
-    const hasJobKeywords = jobKeywords.some(keyword =>
+    // Check for application-specific URLs
+    const hasApplicationKeywords = applicationKeywords.some(keyword =>
       pathname.includes(keyword) || 
-      hostname.includes(keyword) || 
       title.includes(keyword)
     );
+    
+    // Check for common external application systems
+    const externalSystems = [
+      "greenhouse.io", "workday.com", "lever.co", 
+      "bamboohr.com", "smartrecruiters.com", "icims.com",
+      "taleo.net", "brassring.com", "ultipro.com"
+    ];
+    
+    const isExternalSystem = externalSystems.some(site => hostname.includes(site));
+    
+    return hasApplicationKeywords || isExternalSystem;
+  }
+
+  // Check if this is a job listing page (but not application page)
+  function isJobListingPage() {
+    const pathname = window.location.pathname.toLowerCase();
+    const hostname = window.location.hostname.toLowerCase();
+    const title = document.title.toLowerCase();
+    
+    // Job-related keywords for listings
+    const jobKeywords = [
+      "job", "jobs", "career", "careers", "position", "opening", 
+      "opportunity", "employment", "vacancy"
+    ];
     
     // Check for common job site domains
     const jobSites = [
@@ -37,9 +62,15 @@ console.log("[JobLogger] Content script loaded");
       "dice.com", "angel.co", "stackoverflow.com", "github.com"
     ];
     
+    const hasJobKeywords = jobKeywords.some(keyword =>
+      pathname.includes(keyword) || 
+      hostname.includes(keyword) || 
+      title.includes(keyword)
+    );
+    
     const isJobSite = jobSites.some(site => hostname.includes(site));
     
-    return hasJobKeywords || isJobSite;
+    return (hasJobKeywords || isJobSite) && !isJobApplicationPage();
   }
 
   // Extract job information from the page
@@ -106,10 +137,62 @@ console.log("[JobLogger] Content script loaded");
     return { title, company, url: window.location.href };
   }
 
+  // Check if this is a confirmation/success page
+  function isConfirmationPage() {
+    const pathname = window.location.pathname.toLowerCase();
+    const title = document.title.toLowerCase();
+    const bodyText = document.body.innerText.toLowerCase();
+    
+    const confirmationKeywords = [
+      "thank you", "application received", "application submitted",
+      "success", "confirmation", "submitted", "received",
+      "thank you for applying", "application complete", "application successful"
+    ];
+    
+    return confirmationKeywords.some(keyword =>
+      pathname.includes(keyword) ||
+      title.includes(keyword) ||
+      bodyText.includes(keyword)
+    );
+  }
+
+  // Save job info to session storage when starting application
+  function savePendingJob(jobInfo) {
+    const pendingJob = {
+      ...jobInfo,
+      timestamp: Date.now(),
+      source: window.location.hostname
+    };
+    sessionStorage.setItem("jobLogger_pending", JSON.stringify(pendingJob));
+    console.log("[JobLogger] Saved pending job:", pendingJob);
+  }
+
+  // Get pending job from session storage
+  function getPendingJob() {
+    const pending = sessionStorage.getItem("jobLogger_pending");
+    if (pending) {
+      try {
+        return JSON.parse(pending);
+      } catch (e) {
+        console.error("[JobLogger] Error parsing pending job:", e);
+      }
+    }
+    return null;
+  }
+
+  // Clear pending job from session storage
+  function clearPendingJob() {
+    sessionStorage.removeItem("jobLogger_pending");
+    console.log("[JobLogger] Cleared pending job");
+  }
+
   // Show confirmation popup
   function showConfirmationPopup(jobInfo) {
-    if (isShowingPopup) return;
+    if (isShowingPopup || lastJobUrl === jobInfo.url) return;
+    
     isShowingPopup = true;
+    lastJobUrl = jobInfo.url;
+    lastJobInfo = jobInfo;
 
     const popup = document.createElement("div");
     popup.style.cssText = `
@@ -161,13 +244,17 @@ console.log("[JobLogger] Content script loaded");
     // Add event listeners
     popup.querySelector("#jobLoggerYes").addEventListener("click", () => {
       logJob(jobInfo);
+      clearPendingJob();
       removePopup();
     });
 
-    popup.querySelector("#jobLoggerNo").addEventListener("click", removePopup);
+    popup.querySelector("#jobLoggerNo").addEventListener("click", () => {
+      clearPendingJob();
+      removePopup();
+    });
 
-    // Auto-remove after 10 seconds
-    setTimeout(removePopup, 10000);
+    // Auto-remove after 15 seconds
+    setTimeout(removePopup, 15000);
 
     function removePopup() {
       if (popup.parentNode) {
@@ -221,22 +308,82 @@ console.log("[JobLogger] Content script loaded");
     }, 3000);
   }
 
-  // Main detection logic
-  function checkForJobApplication() {
+  // Detect when user starts applying
+  function setupApplicationDetection() {
+    // Listen for form submissions
+    document.addEventListener("submit", function(e) {
+      if (!isEnabled) return;
+      
+      console.log("[JobLogger] Form submitted detected");
+      
+      if (isJobListingPage() || isJobApplicationPage()) {
+        const jobInfo = extractJobInfo();
+        savePendingJob(jobInfo);
+        
+        // Wait a bit for the form to process
+        setTimeout(() => {
+          showConfirmationPopup(jobInfo);
+        }, 1000);
+      }
+    }, true);
+
+    // Listen for "Apply" button clicks
+    document.addEventListener("click", function(e) {
+      if (!isEnabled) return;
+      
+      const target = e.target;
+      const text = target.textContent.toLowerCase();
+      const isApplyButton = text.includes("apply") || 
+                           text.includes("submit") || 
+                           text.includes("send") ||
+                           target.type === "submit";
+      
+      if (isApplyButton && (isJobListingPage() || isJobApplicationPage())) {
+        console.log("[JobLogger] Apply button clicked");
+        
+        const jobInfo = extractJobInfo();
+        savePendingJob(jobInfo);
+        
+        // Wait a bit for the action to complete
+        setTimeout(() => {
+          showConfirmationPopup(jobInfo);
+        }, 2000);
+      }
+    }, true);
+  }
+
+  // Check for confirmation pages and pending jobs
+  function checkForCompletions() {
     if (!isEnabled) return;
     
-    if (isJobApplicationPage()) {
-      const jobInfo = extractJobInfo();
-      
-      // Wait a bit for the page to fully load
-      setTimeout(() => {
-        showConfirmationPopup(jobInfo);
-      }, 2000);
+    // If this is a confirmation page and we have a pending job, log it automatically
+    if (isConfirmationPage()) {
+      const pendingJob = getPendingJob();
+      if (pendingJob) {
+        console.log("[JobLogger] Confirmation page detected, logging pending job");
+        logJob(pendingJob);
+        clearPendingJob();
+        return;
+      }
+    }
+    
+    // If we're back on a job site and have a pending job, ask for confirmation
+    if (isJobListingPage()) {
+      const pendingJob = getPendingJob();
+      if (pendingJob) {
+        // Check if the pending job is older than 5 minutes
+        const timeDiff = Date.now() - pendingJob.timestamp;
+        if (timeDiff > 5 * 60 * 1000) { // 5 minutes
+          console.log("[JobLogger] Returning to job site, asking about pending job");
+          showConfirmationPopup(pendingJob);
+        }
+      }
     }
   }
 
   // Initialize
   checkEnabled();
+  setupApplicationDetection();
   
   // Listen for storage changes (when user toggles auto-detection)
   chrome.storage.onChanged.addListener((changes) => {
@@ -247,9 +394,9 @@ console.log("[JobLogger] Content script loaded");
 
   // Check when page loads
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", checkForJobApplication);
+    document.addEventListener("DOMContentLoaded", checkForCompletions);
   } else {
-    checkForJobApplication();
+    checkForCompletions();
   }
 
   // Also check on navigation (for SPAs)
@@ -258,9 +405,10 @@ console.log("[JobLogger] Content script loaded");
     const url = location.href;
     if (url !== lastUrl) {
       lastUrl = url;
-      setTimeout(checkForJobApplication, 1000);
+      lastJobUrl = null; // Reset for new page
+      setTimeout(checkForCompletions, 1000);
     }
   }).observe(document, { subtree: true, childList: true });
 
-  console.log("[JobLogger] Job detection ready");
+  console.log("[JobLogger] Smart job detection ready");
 })(); 
