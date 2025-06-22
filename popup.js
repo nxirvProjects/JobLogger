@@ -8,6 +8,10 @@ const clearAllBtn = document.getElementById("clearAllBtn");
 const downloadCsvBtn = document.getElementById("downloadCsvBtn");
 const autoDetectionToggle = document.getElementById("autoDetectionToggle");
 const successMessage = document.getElementById("successMessage");
+const menuBtn = document.getElementById("menuBtn");
+const dropdownMenu = document.getElementById("dropdownMenu");
+const uploadCsvBtn = document.getElementById("uploadCsvBtn");
+const csvFileInput = document.getElementById("csvFileInput");
 
 // Load jobs from storage and display them
 function loadJobs() {
@@ -184,6 +188,93 @@ function toggleAutoDetection() {
   });
 }
 
+// Upload and process CSV file
+function handleCsvUpload(event) {
+  const file = event.target.files[0];
+  if (!file) {
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    importJobsFromCSV(text);
+  };
+  reader.onerror = (e) => {
+    alert("Error reading file.");
+    console.error("FileReader error:", e);
+  };
+  reader.readAsText(file);
+  
+  // Reset the file input so the user can upload the same file again
+  csvFileInput.value = "";
+}
+
+function importJobsFromCSV(csvText) {
+  const lines = csvText.trim().split(/\r?\n/);
+  if (lines.length < 2) {
+    alert("CSV file is empty or has no data rows.");
+    return;
+  }
+  
+  const header = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g, ''));
+  const companyIndex = header.indexOf("company");
+  const titleIndex = header.indexOf("job title");
+  const dateIndex = header.indexOf("date logged");
+
+  if (companyIndex === -1 || titleIndex === -1) {
+    alert("CSV file must have 'Company' and 'Job Title' headers.");
+    return;
+  }
+
+  const newJobs = [];
+  for (let i = 1; i < lines.length; i++) {
+    const data = lines[i].split(',').map(d => d.trim().replace(/"/g, ''));
+    
+    const company = data[companyIndex];
+    const title = data[titleIndex];
+    let date = new Date().toISOString(); // Default to now
+
+    if (dateIndex !== -1 && data[dateIndex]) {
+        const parsedDate = new Date(data[dateIndex]);
+        if (!isNaN(parsedDate)) {
+            date = parsedDate.toISOString();
+        }
+    }
+
+    if (company && title) {
+      newJobs.push({ company, title, date });
+    }
+  }
+
+  if (newJobs.length === 0) {
+    alert("No valid jobs found in the CSV file.");
+    return;
+  }
+
+  chrome.storage.local.get(["jobs"], (result) => {
+    const existingJobs = result.jobs || [];
+    const existingJobSignatures = new Set(existingJobs.map(j => `${j.company.toLowerCase()}|${j.title.toLowerCase()}`));
+    
+    const uniqueNewJobs = newJobs.filter(job => {
+        const signature = `${job.company.toLowerCase()}|${job.title.toLowerCase()}`;
+        return !existingJobSignatures.has(signature);
+    });
+
+    const finalJobs = [...existingJobs, ...uniqueNewJobs];
+    chrome.storage.local.set({ jobs: finalJobs }, () => {
+        const importedCount = uniqueNewJobs.length;
+        const skippedCount = newJobs.length - importedCount;
+        successMessage.textContent = `Imported ${importedCount} jobs!`;
+        if (skippedCount > 0) {
+            successMessage.textContent += ` (${skippedCount} duplicates skipped)`;
+        }
+        showSuccessMessage();
+        loadJobs();
+    });
+  });
+}
+
 // Event listeners
 addJobBtn.addEventListener("click", addJob);
 
@@ -191,7 +282,25 @@ clearAllBtn.addEventListener("click", clearAllJobs);
 
 downloadCsvBtn.addEventListener("click", downloadCSV);
 
+uploadCsvBtn.addEventListener("click", () => {
+  csvFileInput.click();
+});
+
+csvFileInput.addEventListener("change", handleCsvUpload);
+
 autoDetectionToggle.addEventListener("change", toggleAutoDetection);
+
+menuBtn.addEventListener("click", (event) => {
+  event.stopPropagation();
+  dropdownMenu.classList.toggle("show");
+});
+
+// Close dropdown if user clicks outside
+window.addEventListener("click", (event) => {
+  if (dropdownMenu.classList.contains("show")) {
+    dropdownMenu.classList.remove("show");
+  }
+});
 
 // Allow Enter key to submit
 companyInput.addEventListener("keypress", (e) => {

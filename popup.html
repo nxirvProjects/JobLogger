@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <style>
     :root {
       --background: #ffffff;
@@ -22,8 +23,12 @@
       --border: #e4e4e7;
       --input: #e4e4e7;
       --ring: #18181b;
-      --radius: 0.5rem;
+      --radius: 0.75rem;
       --success: #10b981;
+    }
+
+    html {
+      background: transparent;
     }
 
     * {
@@ -34,7 +39,7 @@
 
     body {
       font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-      background-color: #f9fafb;
+      background: transparent;
       color: var(--foreground);
       margin: 0;
       padding: 0;
@@ -46,11 +51,12 @@
     
     .modal {
       background-color: var(--card);
-      width: 400px;
+      width: auto;
       border-radius: var(--radius);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
       overflow: hidden;
       border: 1px solid var(--border);
+      margin: 10px;
     }
     
     .modal-header {
@@ -297,6 +303,67 @@
       margin-bottom: 1rem;
       display: none;
     }
+
+    .menu-button {
+      background: var(--secondary);
+      color: var(--secondary-foreground);
+      border: none;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+      line-height: 32px;
+      text-align: center;
+      transition: background-color 0.15s;
+    }
+
+    .menu-button:hover {
+      background-color: #e4e4e7;
+    }
+    
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: var(--card);
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 1;
+        right: 0;
+        bottom: 100%;
+        margin-bottom: 8px;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+
+    .dropdown-content button {
+        color: var(--destructive);
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+        font-size: 0.875rem;
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    .dropdown-content button:hover {
+        background-color: var(--secondary);
+    }
+    
+    .dropdown-content.show {
+        display: block;
+    }
   </style>
 </head>
 <body>
@@ -334,12 +401,19 @@
         <div class="jobs-list" id="jobsList">
           <div class="empty-state">No jobs logged yet</div>
         </div>
-        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-          <button class="secondary" id="downloadCsvBtn" style="flex: 1;">Download CSV</button>
-          <button class="secondary" id="clearAllBtn" style="flex: 1;">Clear All Jobs</button>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 1rem;">
+          <button class="secondary" id="downloadCsvBtn" style="flex-grow: 1;">Download CSV</button>
+          <div class="dropdown">
+            <button id="menuBtn" class="menu-button">•••</button>
+            <div id="dropdownMenu" class="dropdown-content">
+              <button id="uploadCsvBtn">Upload CSV</button>
+              <button id="clearAllBtn">Clear All Jobs</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+    <input type="file" id="csvFileInput" accept=".csv" style="display: none;" />
   </div>
   
   <script src="popup.js"></script>

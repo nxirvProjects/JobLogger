@@ -159,9 +159,10 @@ jobLogger/
 
 ## Version History
 
-- **v2.1** - Added automatic job detection with manual confirmation
-- **v2.0** - Manual job logger with CSV export
-- **v1.4** - Original Google Sheets integration
+- **v2.2** - Polished UI, added CSV upload, and converted 'Clear All' to a safer menu option.
+- **v2.1** - Added automatic job detection with manual confirmation.
+- **v2.0** - Initial manual job logger with CSV export.
+- **v1.4** - Original Google Sheets integration.
 
 ## Contributing
 
