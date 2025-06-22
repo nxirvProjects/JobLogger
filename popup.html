@@ -27,10 +27,6 @@
       --success: #10b981;
     }
 
-    html {
-      background: transparent;
-    }
-
     * {
       margin: 0;
       padding: 0;
@@ -39,24 +35,19 @@
 
     body {
       font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-      background: transparent;
+      background-color: #f9fafb;
       color: var(--foreground);
       margin: 0;
       padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
     }
     
     .modal {
       background-color: var(--card);
-      width: auto;
+      width: 400px;
       border-radius: var(--radius);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       overflow: hidden;
       border: 1px solid var(--border);
-      margin: 10px;
     }
     
     .modal-header {
