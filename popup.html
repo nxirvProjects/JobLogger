@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    :root {
+      --background: #ffffff;
+      --foreground: #09090b;
+      --card: #ffffff;
+      --card-foreground: #09090b;
+      --popover: #ffffff;
+      --popover-foreground: #09090b;
+      --primary: #18181b;
+      --primary-foreground: #ffffff;
+      --secondary: #f4f4f5;
+      --secondary-foreground: #18181b;
+      --muted: #f4f4f5;
+      --muted-foreground: #71717a;
+      --accent: #f4f4f5;
+      --accent-foreground: #18181b;
+      --destructive: #ef4444;
+      --destructive-foreground: #f8fafc;
+      --border: #e4e4e7;
+      --input: #e4e4e7;
+      --ring: #18181b;
+      --radius: 0.5rem;
+      --success: #10b981;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background-color: #f9fafb;
+      color: var(--foreground);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    
+    .modal {
+      background-color: var(--card);
+      width: 400px;
+      border-radius: var(--radius);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem 1.5rem 0 1.5rem;
+    }
+    
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--foreground);
+      line-height: 1.5;
+    }
+
+    .job-count {
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+      padding: 0.25rem 0.75rem;
+      border-radius: 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    
+    .modal-content {
+      padding: 1.5rem;
+    }
+    
+    .section {
+      margin-bottom: 1.5rem;
+    }
+    
+    .section:last-child {
+      margin-bottom: 0;
+    }
+    
+    .section-divider {
+      height: 1px;
+      background-color: var(--border);
+      margin: 1.5rem 0;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.75rem;
+      color: var(--foreground);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    
+    input[type="text"] {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      margin-top: 0.25rem;
+      margin-bottom: 1rem;
+      background-color: var(--background);
+      border: 1px solid var(--input);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      color: var(--foreground);
+    }
+    
+    input[type="text"]:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(24, 24, 27, 0.1);
+      border-color: var(--ring);
+    }
+    
+    button {
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+      border: none;
+      padding: 0.5rem 1rem;
+      width: 100%;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: background-color 0.15s;
+      height: 40px;
+    }
+    
+    button:hover {
+      background-color: #27272a;
+    }
+
+    button.secondary {
+      background-color: var(--secondary);
+      color: var(--secondary-foreground);
+    }
+
+    button.secondary:hover {
+      background-color: #e4e4e7;
+    }
+
+    button.destructive {
+      background-color: var(--destructive);
+      color: var(--destructive-foreground);
+    }
+
+    button.destructive:hover {
+      background-color: #dc2626;
+    }
+    
+    .field-label {
+      display: block;
+      font-weight: 500;
+      font-size: 0.875rem;
+      color: var(--foreground);
+      margin-bottom: 0.25rem;
+    }
+
+    .text-muted {
+      color: var(--muted-foreground);
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+
+    .jobs-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: var(--background);
+    }
+
+    .job-item {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .job-item:last-child {
+      border-bottom: none;
+    }
+
+    .job-info {
+      flex: 1;
+    }
+
+    .job-company {
+      font-weight: 500;
+      font-size: 0.875rem;
+      color: var(--foreground);
+      margin-bottom: 0.25rem;
+    }
+
+    .job-title {
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+    }
+
+    .job-date {
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+      margin-top: 0.25rem;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: var(--destructive);
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      width: auto;
+      height: auto;
+    }
+
+    .delete-btn:hover {
+      background-color: var(--destructive);
+      color: var(--destructive-foreground);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted-foreground);
+    }
+
+    .success-message {
+      background-color: var(--success);
+      color: white;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Job Logger</h3>
+      <div class="job-count" id="jobCount">0</div>
+    </div>
+    <div class="modal-content">
+      <div class="success-message" id="successMessage">Job logged successfully!</div>
+      
+      <div class="section">
+        <div class="field-label">Company</div>
+        <input type="text" id="companyInput" placeholder="Enter company name">
+        
+        <div class="field-label">Job Title</div>
+        <input type="text" id="titleInput" placeholder="Enter job title">
+        
+        <button id="addJobBtn">Add Job</button>
+      </div>
+      
+      <div class="section-divider"></div>
+      
+      <div class="section">
+        <div class="field-label">Recent Jobs</div>
+        <div class="jobs-list" id="jobsList">
+          <div class="empty-state">No jobs logged yet</div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+          <button class="secondary" id="downloadCsvBtn" style="flex: 1;">Download CSV</button>
+          <button class="secondary" id="clearAllBtn" style="flex: 1;">Clear All Jobs</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
