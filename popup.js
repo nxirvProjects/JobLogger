@@ -42,7 +42,7 @@ function displayJobs(jobs) {
         <div class="job-title">${escapeHtml(job.title)}</div>
         <div class="job-date">${formatDate(job.date)}</div>
       </div>
-      <button class="delete-btn" onclick="deleteJob('${job.date}')">×</button>
+      <button class="delete-btn" onclick="deleteJob('${job.id}')">×</button>
     </div>
   `).join('');
 }
@@ -63,6 +63,7 @@ function addJob() {
   }
 
   const newJob = {
+    id: Date.now().toString() + Math.random().toString(36).substr(2, 9), // unique id
     company,
     title,
     date: new Date().toISOString()
@@ -81,11 +82,11 @@ function addJob() {
   });
 }
 
-// Delete a job by date (unique identifier)
-function deleteJob(jobDate) {
+// Delete a job by id (unique identifier)
+function deleteJob(jobId) {
   chrome.storage.local.get(["jobs"], (data) => {
     const jobs = data.jobs || [];
-    const jobIndex = jobs.findIndex(job => job.date === jobDate);
+    const jobIndex = jobs.findIndex(job => job.id === jobId);
     
     if (jobIndex !== -1) {
       jobs.splice(jobIndex, 1);
@@ -320,4 +321,6 @@ titleInput.addEventListener("keypress", (e) => {
 });
 
 // Load jobs when popup opens
-document.addEventListener("DOMContentLoaded", loadJobs); 
+document.addEventListener("DOMContentLoaded", loadJobs);
+
+window.deleteJob = deleteJob; 

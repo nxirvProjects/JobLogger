@@ -186,102 +186,6 @@ console.log("[JobLogger] Content script loaded");
     console.log("[JobLogger] Cleared pending job");
   }
 
-  // Show confirmation popup
-  function showConfirmationPopup(jobInfo) {
-    if (isShowingPopup || lastJobUrl === jobInfo.url) return;
-    
-    isShowingPopup = true;
-    lastJobUrl = jobInfo.url;
-    lastJobInfo = jobInfo;
-
-    const popup = document.createElement("div");
-    popup.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #1f2937;
-      color: white;
-      padding: 16px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      z-index: 10000;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 14px;
-      max-width: 300px;
-      border: 1px solid #374151;
-    `;
-
-    popup.innerHTML = `
-      <div style="margin-bottom: 12px; font-weight: 600;">Did you apply to a job?</div>
-      <div style="margin-bottom: 8px; color: #d1d5db;">
-        <strong>${jobInfo.company}</strong><br>
-        ${jobInfo.title}
-      </div>
-      <div style="display: flex; gap: 8px;">
-        <button id="jobLoggerYes" style="
-          background: #10b981;
-          color: white;
-          border: none;
-          padding: 6px 12px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 12px;
-        ">Yes, Log It</button>
-        <button id="jobLoggerNo" style="
-          background: #6b7280;
-          color: white;
-          border: none;
-          padding: 6px 12px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 12px;
-        ">No</button>
-      </div>
-    `;
-
-    document.body.appendChild(popup);
-
-    // Add event listeners
-    popup.querySelector("#jobLoggerYes").addEventListener("click", () => {
-      logJob(jobInfo);
-      clearPendingJob();
-      removePopup();
-    });
-
-    popup.querySelector("#jobLoggerNo").addEventListener("click", () => {
-      clearPendingJob();
-      removePopup();
-    });
-
-    // Auto-remove after 15 seconds
-    setTimeout(removePopup, 15000);
-
-    function removePopup() {
-      if (popup.parentNode) {
-        popup.parentNode.removeChild(popup);
-      }
-      isShowingPopup = false;
-    }
-  }
-
-  // Log the job
-  function logJob(jobInfo) {
-    const newJob = {
-      company: jobInfo.company,
-      title: jobInfo.title,
-      date: new Date().toISOString()
-    };
-
-    chrome.storage.local.get(["jobs"], (data) => {
-      const jobs = data.jobs || [];
-      jobs.push(newJob);
-      
-      chrome.storage.local.set({ jobs }, () => {
-        showSuccessToast();
-      });
-    });
-  }
-
   // Show success toast
   function showSuccessToast() {
     const toast = document.createElement("div");
@@ -319,11 +223,6 @@ console.log("[JobLogger] Content script loaded");
       if (isJobListingPage() || isJobApplicationPage()) {
         const jobInfo = extractJobInfo();
         savePendingJob(jobInfo);
-        
-        // Wait a bit for the form to process
-        setTimeout(() => {
-          showConfirmationPopup(jobInfo);
-        }, 1000);
       }
     }, true);
 
@@ -343,11 +242,6 @@ console.log("[JobLogger] Content script loaded");
         
         const jobInfo = extractJobInfo();
         savePendingJob(jobInfo);
-        
-        // Wait a bit for the action to complete
-        setTimeout(() => {
-          showConfirmationPopup(jobInfo);
-        }, 2000);
       }
     }, true);
   }
@@ -375,7 +269,8 @@ console.log("[JobLogger] Content script loaded");
         const timeDiff = Date.now() - pendingJob.timestamp;
         if (timeDiff > 5 * 60 * 1000) { // 5 minutes
           console.log("[JobLogger] Returning to job site, asking about pending job");
-          showConfirmationPopup(pendingJob);
+          logJob(pendingJob);
+          clearPendingJob();
         }
       }
     }
