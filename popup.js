@@ -35,14 +35,14 @@ function displayJobs(jobs) {
   // Sort jobs by date (newest first)
   const sortedJobs = jobs.sort((a, b) => new Date(b.date) - new Date(a.date));
   
-  jobsList.innerHTML = sortedJobs.map((job, index) => `
+  jobsList.innerHTML = sortedJobs.map((job) => `
     <div class="job-item">
       <div class="job-info">
         <div class="job-company">${escapeHtml(job.company)}</div>
         <div class="job-title">${escapeHtml(job.title)}</div>
         <div class="job-date">${formatDate(job.date)}</div>
       </div>
-      <button class="delete-btn" onclick="deleteJob(${index})">×</button>
+      <button class="delete-btn" onclick="deleteJob('${job.date}')">×</button>
     </div>
   `).join('');
 }
@@ -81,16 +81,20 @@ function addJob() {
   });
 }
 
-// Delete a job by index
-function deleteJob(index) {
+// Delete a job by date (unique identifier)
+function deleteJob(jobDate) {
   chrome.storage.local.get(["jobs"], (data) => {
     const jobs = data.jobs || [];
-    jobs.splice(index, 1);
+    const jobIndex = jobs.findIndex(job => job.date === jobDate);
     
-    chrome.storage.local.set({ jobs }, () => {
-      displayJobs(jobs);
-      updateJobCount(jobs.length);
-    });
+    if (jobIndex !== -1) {
+      jobs.splice(jobIndex, 1);
+      
+      chrome.storage.local.set({ jobs }, () => {
+        displayJobs(jobs);
+        updateJobCount(jobs.length);
+      });
+    }
   });
 }
 
