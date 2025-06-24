@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <style>
     :root {
-      --background: #ffffff;
-      --foreground: #09090b;
-      --card: #ffffff;
-      --card-foreground: #09090b;
-      --popover: #ffffff;
-      --popover-foreground: #09090b;
+      --background: #f8fafc;
+      --foreground: #18181b;
+      --card: #fff;
+      --card-foreground: #18181b;
+      --popover: #fff;
+      --popover-foreground: #18181b;
       --primary: #18181b;
-      --primary-foreground: #ffffff;
+      --primary-foreground: #fff;
       --secondary: #f4f4f5;
       --secondary-foreground: #18181b;
       --muted: #f4f4f5;
@@ -19,12 +20,13 @@
       --accent: #f4f4f5;
       --accent-foreground: #18181b;
       --destructive: #ef4444;
-      --destructive-foreground: #f8fafc;
+      --destructive-foreground: #fff;
       --border: #e4e4e7;
       --input: #e4e4e7;
       --ring: #18181b;
       --radius: 0.75rem;
       --success: #10b981;
+      --shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.08);
     }
 
     * {
@@ -35,28 +37,30 @@
 
     body {
       font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-      background-color: #f9fafb;
+      background-color: var(--background);
       color: var(--foreground);
       margin: 0;
       padding: 0;
     }
-    
+
     .modal {
       background-color: var(--card);
       width: 400px;
       border-radius: var(--radius);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      box-shadow: var(--shadow);
       overflow: hidden;
       border: 1px solid var(--border);
     }
-    
+
     .modal-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 1.5rem 1.5rem 0 1.5rem;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
     }
-    
+
     .modal-title {
       font-size: 1.25rem;
       font-weight: 600;
@@ -72,53 +76,55 @@
       font-size: 0.875rem;
       font-weight: 500;
     }
-    
+
     .modal-content {
       padding: 1.5rem;
+      background: var(--card);
     }
-    
+
     .section {
       margin-bottom: 1.5rem;
     }
-    
+
     .section:last-child {
       margin-bottom: 0;
     }
-    
+
     .section-divider {
       height: 1px;
       background-color: var(--border);
       margin: 1.5rem 0;
     }
-    
-    label {
+
+    label,
+    .field-label {
       display: block;
       margin-bottom: 0.75rem;
       color: var(--foreground);
-      font-size: 0.875rem;
+      font-size: 0.95rem;
       font-weight: 500;
     }
-    
+
     .toggle-switch {
       display: flex;
       align-items: center;
       justify-content: space-between;
       cursor: pointer;
     }
-    
+
     .switch {
       position: relative;
       display: inline-block;
       width: 40px;
       height: 20px;
     }
-    
+
     .switch input {
       opacity: 0;
       width: 0;
       height: 0;
     }
-    
+
     .slider {
       position: absolute;
       cursor: pointer;
@@ -130,7 +136,7 @@
       transition: .2s;
       border-radius: 24px;
     }
-    
+
     .slider:before {
       position: absolute;
       content: "";
@@ -142,15 +148,15 @@
       transition: .2s;
       border-radius: 50%;
     }
-    
-    input:checked + .slider {
+
+    input:checked+.slider {
       background-color: var(--primary);
     }
-    
-    input:checked + .slider:before {
+
+    input:checked+.slider:before {
       transform: translateX(20px);
     }
-    
+
     input[type="text"] {
       width: 100%;
       padding: 0.5rem 0.75rem;
@@ -159,17 +165,17 @@
       background-color: var(--background);
       border: 1px solid var(--input);
       border-radius: var(--radius);
-      font-size: 0.875rem;
+      font-size: 0.95rem;
       transition: border-color 0.15s, box-shadow 0.15s;
       color: var(--foreground);
     }
-    
+
     input[type="text"]:focus {
       outline: none;
       box-shadow: 0 0 0 2px rgba(24, 24, 27, 0.1);
       border-color: var(--ring);
     }
-    
+
     button {
       background-color: var(--primary);
       color: var(--primary-foreground);
@@ -178,22 +184,27 @@
       width: 100%;
       border-radius: var(--radius);
       cursor: pointer;
-      font-size: 0.875rem;
+      font-size: 0.95rem;
       font-weight: 500;
-      transition: background-color 0.15s;
+      transition: background-color 0.15s, box-shadow 0.15s;
       height: 40px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     }
-    
-    button:hover {
+
+    button:hover,
+    button:focus {
       background-color: #27272a;
+      outline: none;
     }
 
     button.secondary {
       background-color: var(--secondary);
       color: var(--secondary-foreground);
+      border: 1px solid var(--border);
     }
 
-    button.secondary:hover {
+    button.secondary:hover,
+    button.secondary:focus {
       background-color: #e4e4e7;
     }
 
@@ -202,16 +213,9 @@
       color: var(--destructive-foreground);
     }
 
-    button.destructive:hover {
+    button.destructive:hover,
+    button.destructive:focus {
       background-color: #dc2626;
-    }
-    
-    .field-label {
-      display: block;
-      font-weight: 500;
-      font-size: 0.875rem;
-      color: var(--foreground);
-      margin-bottom: 0.25rem;
     }
 
     .text-muted {
@@ -226,6 +230,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       background-color: var(--background);
+      margin-bottom: 1rem;
     }
 
     .job-item {
@@ -234,6 +239,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      background: var(--card);
     }
 
     .job-item:last-child {
@@ -246,18 +252,18 @@
 
     .job-company {
       font-weight: 500;
-      font-size: 0.875rem;
+      font-size: 0.95rem;
       color: var(--foreground);
       margin-bottom: 0.25rem;
     }
 
     .job-title {
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       color: var(--muted-foreground);
     }
 
     .job-date {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       color: var(--muted-foreground);
       margin-top: 0.25rem;
     }
@@ -269,14 +275,17 @@
       cursor: pointer;
       padding: 0.25rem;
       border-radius: 0.25rem;
-      font-size: 0.75rem;
+      font-size: 1.1rem;
       width: auto;
       height: auto;
+      transition: background 0.15s;
     }
 
-    .delete-btn:hover {
+    .delete-btn:hover,
+    .delete-btn:focus {
       background-color: var(--destructive);
       color: var(--destructive-foreground);
+      outline: none;
     }
 
     .empty-state {
@@ -290,9 +299,10 @@
       color: white;
       padding: 0.5rem 0.75rem;
       border-radius: var(--radius);
-      font-size: 0.875rem;
+      font-size: 0.95rem;
       margin-bottom: 1rem;
       display: none;
+      box-shadow: 0 1px 2px rgba(16, 185, 129, 0.08);
     }
 
     .menu-button {
@@ -311,82 +321,203 @@
       transition: background-color 0.15s;
     }
 
-    .menu-button:hover {
+    .menu-button:hover,
+    .menu-button:focus {
       background-color: #e4e4e7;
+      outline: none;
     }
-    
+
     .dropdown {
-        position: relative;
-        display: inline-block;
+      position: relative;
+      display: inline-block;
     }
 
     .dropdown-content {
-        display: none;
-        position: absolute;
-        background-color: var(--card);
-        min-width: 160px;
-        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-        z-index: 1;
-        right: 0;
-        bottom: 100%;
-        margin-bottom: 8px;
-        border-radius: var(--radius);
-        border: 1px solid var(--border);
-        overflow: hidden;
+      display: none;
+      position: absolute;
+      background-color: var(--card);
+      min-width: 160px;
+      box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.08);
+      z-index: 1;
+      right: 0;
+      bottom: 100%;
+      margin-bottom: 8px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
     }
 
     .dropdown-content button {
-        color: var(--destructive);
-        padding: 12px 16px;
-        text-decoration: none;
-        display: block;
-        font-size: 0.875rem;
-        width: 100%;
-        text-align: left;
-        background: none;
-        border: none;
-        cursor: pointer;
+      color: var(--destructive);
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      font-size: 0.95rem;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      cursor: pointer;
     }
 
     .dropdown-content button:hover {
-        background-color: var(--secondary);
+      background-color: var(--secondary);
     }
-    
+
     .dropdown-content.show {
-        display: block;
+      display: block;
+    }
+
+    /* Quick Links styles */
+    .link-form input[type="text"] {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--input);
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      margin-bottom: 0;
+    }
+
+    .link-form button {
+      background: var(--primary);
+      color: var(--primary-foreground);
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.5rem 1rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .link-form button:hover,
+    .link-form button:focus {
+      background: #27272a;
+      outline: none;
+    }
+
+    .links-list {
+      margin-top: 1rem;
+    }
+
+    .link-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--card);
+    }
+
+    .link-label {
+      font-weight: 500;
+      margin-right: 0.5rem;
+      color: var(--foreground);
+      word-break: break-all;
+    }
+
+    .link-url {
+      color: #2563eb;
+      text-decoration: underline;
+      margin-right: 0.5rem;
+      word-break: break-all;
+      font-size: 0.95em;
+    }
+
+    .link-actions button {
+      margin-left: 0.25rem;
+      background: var(--secondary);
+      color: var(--secondary-foreground);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .link-actions button.copy {
+      background: #10b981;
+      color: #fff;
+      border: none;
+    }
+
+    .link-actions button.copy:hover,
+    .link-actions button.copy:focus {
+      background: #059669;
+      outline: none;
+    }
+
+    .link-actions button.delete {
+      background: #ef4444;
+      color: #fff;
+      border: none;
+    }
+
+    .link-actions button.delete:hover,
+    .link-actions button.delete:focus {
+      background: #dc2626;
+      outline: none;
+    }
+
+    .copied-msg {
+      color: #10b981;
+      font-size: 0.85em;
+      margin-left: 0.5rem;
+      display: none;
+    }
+
+    #backToJobsBtn:hover {
+      background: rgba(24, 24, 27, 0.08);
+      color: #18181b;
+    }
+
+    .link-actions button.copy,
+    .link-actions button.delete {
+      width: 36px !important;
+      height: 36px !important;
+    }
+
+    .popup-disabled-bg {
+      opacity: 0.5;
+      pointer-events: none;
+      filter: grayscale(0.7);
+    }
+    .popup-disabled {
+      opacity: 0.7 !important;
+      pointer-events: none !important;
+    }
+    /* Ensure the toggle itself is always enabled and visible */
+    #autoDetectionToggle, label[for="autoDetectionToggle"], .switch, .slider {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      filter: none !important;
     }
   </style>
 </head>
+
 <body>
   <div class="modal">
     <div class="modal-header">
-      <h3 class="modal-title">Job Logger</h3>
-      <div style="display: flex; align-items: center; gap: 1rem;">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <span style="font-size: 0.75rem; color: var(--muted-foreground);">Auto-detect</span>
-          <div class="switch">
-            <input type="checkbox" id="autoDetectionToggle">
-            <span class="slider"></span>
-          </div>
-        </div>
+      <h3 class="modal-title" style="margin-bottom: 10px;">Job-Log</h3>
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 10px;">
         <div class="job-count" id="jobCount">0</div>
       </div>
     </div>
     <div class="modal-content">
       <div class="success-message" id="successMessage">Job logged successfully!</div>
-      
+
       <div class="section">
         <div class="field-label">Company</div>
         <input type="text" id="companyInput" placeholder="Enter company name">
-        
+
         <div class="field-label">Job Title</div>
         <input type="text" id="titleInput" placeholder="Enter job title">
-        
+
         <button id="addJobBtn">Add Job</button>
       </div>
-      
+
       <div class="section-divider"></div>
-      
+
       <div class="section">
         <div class="field-label">Recent Jobs</div>
         <div class="jobs-list" id="jobsList">
@@ -394,10 +525,10 @@
         </div>
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 1rem;">
           <button class="secondary" id="downloadCsvBtn" style="flex-grow: 1;">Download CSV</button>
+          <button class="secondary" id="uploadCsvBtn" style="flex-grow: 1;">Upload CSV</button>
           <div class="dropdown">
             <button id="menuBtn" class="menu-button">•••</button>
             <div id="dropdownMenu" class="dropdown-content">
-              <button id="uploadCsvBtn">Upload CSV</button>
               <button id="clearAllBtn">Clear All Jobs</button>
             </div>
           </div>
@@ -405,8 +536,41 @@
       </div>
     </div>
     <input type="file" id="csvFileInput" accept=".csv" style="display: none;" />
+    <button id="quickLinksBtn" class="secondary"
+      style="width: 100%; margin-top: 1rem; border-radius: var(--radius); font-size: 1rem; font-weight: 500; background: var(--secondary); color: var(--secondary-foreground); border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.03);">Quick
+      Links</button>
+    <div id="quickLinksSection"
+      style="display: none; margin-top: 1.5rem; background: none; box-shadow: none; border: none; border-radius: 0;">
+      <h3 style="margin-bottom: 0.5rem; margin-left: 12px; font-size: 1.1rem; font-weight: 600; background: none;">Quick Links</h3>
+      <div style="height: 1px; background: var(--border); margin-bottom: 1rem;"></div>
+      <form class="link-form" id="linkForm"
+        style="display: flex; gap: .3rem; margin-bottom: 1rem; align-items: center; padding: 0; background: none; border: none; box-shadow: none; border-radius: 0;">
+        <input type="text" id="linkLabel" placeholder="Label"
+          style="flex: 1; font-size: 1rem; border-radius: var(--radius); height: 30px; background: none; box-shadow: none; border: 1px solid var(--input);">
+        <input type="text" id="linkUrl" placeholder="Paste URL here" required
+          style="flex: 2; font-size: 1rem; border-radius: var(--radius); height: 30px; background: none; box-shadow: none; border: 1px solid var(--input);">
+        <button type="submit"
+          style="width: 40px; height: 40px; min-width: 40px; padding: 0; display: flex; align-items: center; justify-content: center; background: none; color: var(--primary); border: none; box-shadow: none; border-radius: 0;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 5v14m7-7H5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+      </form>
+      <div class="links-list" id="linksList"
+        style="margin-top: 1rem; background: none; border: none; box-shadow: none; border-radius: 0;"></div>
+      <div style="display: flex; justify-content: center; margin-top: 1.5rem;">
+        <span id="backToJobsBtn" title="Go back"
+          style="display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted-foreground); background: none; border: none; width: 36px; height: 36px; border-radius: 50%; transition: background 0.15s;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path d="M12 8l-6 6h12l-6-6z" fill="currentColor" />
+          </svg>
+        </span>
+      </div>
+    </div>
   </div>
-  
+
   <script src="popup.js"></script>
 </body>
+
 </html>

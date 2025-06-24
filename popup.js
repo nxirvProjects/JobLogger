@@ -1,27 +1,91 @@
-// DOM elements
-const companyInput = document.getElementById("companyInput");
-const titleInput = document.getElementById("titleInput");
-const addJobBtn = document.getElementById("addJobBtn");
-const jobsList = document.getElementById("jobsList");
-const jobCount = document.getElementById("jobCount");
-const clearAllBtn = document.getElementById("clearAllBtn");
-const downloadCsvBtn = document.getElementById("downloadCsvBtn");
-const autoDetectionToggle = document.getElementById("autoDetectionToggle");
-const successMessage = document.getElementById("successMessage");
-const menuBtn = document.getElementById("menuBtn");
-const dropdownMenu = document.getElementById("dropdownMenu");
-const uploadCsvBtn = document.getElementById("uploadCsvBtn");
-const csvFileInput = document.getElementById("csvFileInput");
+document.addEventListener("DOMContentLoaded", function() {
+  // DOM elements
+  const companyInput = document.getElementById("companyInput");
+  const titleInput = document.getElementById("titleInput");
+  const addJobBtn = document.getElementById("addJobBtn");
+  const jobsList = document.getElementById("jobsList");
+  const jobCount = document.getElementById("jobCount");
+  const clearAllBtn = document.getElementById("clearAllBtn");
+  const downloadCsvBtn = document.getElementById("downloadCsvBtn");
+  const successMessage = document.getElementById("successMessage");
+  const menuBtn = document.getElementById("menuBtn");
+  const dropdownMenu = document.getElementById("dropdownMenu");
+  const uploadCsvBtn = document.getElementById("uploadCsvBtn");
+  const csvFileInput = document.getElementById("csvFileInput");
+  const quickLinksBtn = document.getElementById("quickLinksBtn");
+  const quickLinksSection = document.getElementById("quickLinksSection");
+  const linkForm = document.getElementById('linkForm');
+  const linkLabel = document.getElementById('linkLabel');
+  const linkUrl = document.getElementById('linkUrl');
+  const linksList = document.getElementById('linksList');
+  const backToJobsBtn = document.getElementById('backToJobsBtn');
+  const modalContent = document.querySelector('.modal-content');
+  const modalHeader = document.querySelector('.modal-header');
+
+  // Load jobs from storage and display them
+  loadJobs();
+
+  addJobBtn.addEventListener("click", addJob);
+  clearAllBtn.addEventListener("click", clearAllJobs);
+  downloadCsvBtn.addEventListener("click", downloadCSV);
+  uploadCsvBtn.addEventListener("click", () => { csvFileInput.click(); });
+  csvFileInput.addEventListener("change", handleCsvUpload);
+  menuBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    dropdownMenu.classList.toggle("show");
+  });
+  window.addEventListener("click", (event) => {
+    if (dropdownMenu.classList.contains("show")) {
+      dropdownMenu.classList.remove("show");
+    }
+  });
+  companyInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      titleInput.focus();
+    }
+  });
+  titleInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      addJob();
+    }
+  });
+  if (quickLinksBtn) {
+    quickLinksBtn.addEventListener("click", () => {
+      modalContent.style.display = 'none';
+      quickLinksSection.style.display = 'block';
+      quickLinksBtn.style.display = 'none';
+      if (modalHeader) modalHeader.style.display = 'none';
+      loadLinks();
+    });
+  }
+  if (backToJobsBtn) {
+    backToJobsBtn.addEventListener('click', () => {
+      document.getElementById('quickLinksSection').style.display = 'none';
+      modalContent.style.display = 'block';
+      quickLinksBtn.style.display = 'block';
+      if (modalHeader) modalHeader.style.display = 'flex';
+    });
+  }
+  if (linkForm) {
+    linkForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const label = linkLabel.value;
+      const url = linkUrl.value;
+      if (!url.trim()) return;
+      addLink(label, url);
+      linkLabel.value = '';
+      linkUrl.value = '';
+      linkUrl.focus();
+    });
+  }
+});
 
 // Load jobs from storage and display them
 function loadJobs() {
-  chrome.storage.local.get(["jobs", "autoDetectionEnabled"], (data) => {
+  chrome.storage.local.get(["jobs"], (data) => {
     const jobs = data.jobs || [];
     displayJobs(jobs);
     updateJobCount(jobs.length);
-    
-    // Set auto-detection toggle state
-    autoDetectionToggle.checked = data.autoDetectionEnabled !== false; // Default to true
   });
 }
 
@@ -42,9 +106,17 @@ function displayJobs(jobs) {
         <div class="job-title">${escapeHtml(job.title)}</div>
         <div class="job-date">${formatDate(job.date)}</div>
       </div>
-      <button class="delete-btn" onclick="deleteJob('${job.id}')">×</button>
+      <button class="delete-btn" data-job-id="${job.id}">×</button>
     </div>
   `).join('');
+
+  // Add event listeners for delete buttons (CSP-compliant)
+  jobsList.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const jobId = btn.getAttribute('data-job-id');
+      deleteJob(jobId);
+    });
+  });
 }
 
 // Update job count display
@@ -184,15 +256,6 @@ function formatDateForCSV(dateString) {
   });
 }
 
-// Toggle auto-detection
-function toggleAutoDetection() {
-  const enabled = autoDetectionToggle.checked;
-  chrome.storage.local.set({ autoDetectionEnabled: enabled }, () => {
-    successMessage.textContent = enabled ? "Auto-detection enabled" : "Auto-detection disabled";
-    showSuccessMessage();
-  });
-}
-
 // Upload and process CSV file
 function handleCsvUpload(event) {
   const file = event.target.files[0];
@@ -248,7 +311,12 @@ function importJobsFromCSV(csvText) {
     }
 
     if (company && title) {
-      newJobs.push({ company, title, date });
+      newJobs.push({
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        company,
+        title,
+        date
+      });
     }
   }
 
@@ -280,47 +348,82 @@ function importJobsFromCSV(csvText) {
   });
 }
 
-// Event listeners
-addJobBtn.addEventListener("click", addJob);
+function loadLinks() {
+  chrome.storage.local.get(['quickLinks'], (data) => {
+    const links = data.quickLinks || [];
+    renderLinks(links);
+  });
+}
 
-clearAllBtn.addEventListener("click", clearAllJobs);
-
-downloadCsvBtn.addEventListener("click", downloadCSV);
-
-uploadCsvBtn.addEventListener("click", () => {
-  csvFileInput.click();
-});
-
-csvFileInput.addEventListener("change", handleCsvUpload);
-
-autoDetectionToggle.addEventListener("change", toggleAutoDetection);
-
-menuBtn.addEventListener("click", (event) => {
-  event.stopPropagation();
-  dropdownMenu.classList.toggle("show");
-});
-
-// Close dropdown if user clicks outside
-window.addEventListener("click", (event) => {
-  if (dropdownMenu.classList.contains("show")) {
-    dropdownMenu.classList.remove("show");
+function renderLinks(links) {
+  if (links.length === 0) {
+    linksList.innerHTML = '<div style="color: #71717a; text-align: center;">No links saved yet.</div>';
+    return;
   }
-});
+  linksList.innerHTML = links.map(link => `
+    <div class="link-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.25rem 0.5rem 0.5rem; border-bottom: 1px solid var(--border); background: var(--card);">
+      <span class="link-label" style="font-weight: 500; margin-right: 0.5rem; color: var(--foreground); word-break: break-all;">${link.label ? escapeHtml(link.label) : ''}</span>
+      <a class="link-url" href="${escapeHtml(link.url)}" target="_blank" style="color: #2563eb; text-decoration: underline; margin-right: 0.5rem; word-break: break-all; font-size: 0.95em;">${escapeHtml(link.url)}</a>
+      <div class="link-actions" style="display: flex; align-items: center; gap: 0.25rem;">
+        <button class="copy" data-id="${link.id}" title="Copy" style="background: none; color: var(--primary); border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; margin-right: 0.1rem; border-radius: 0.5rem; transition: color 0.15s;">
+          <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' viewBox='0 0 24 24'><rect x='9' y='9' width='13' height='13' rx='2' stroke='currentColor' stroke-width='2'/><rect x='3' y='3' width='13' height='13' rx='2' fill='none' stroke='currentColor' stroke-width='2'/></svg>
+        </button>
+        <button class="delete" data-id="${link.id}" title="Delete" style="background: none; color: var(--destructive); border: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; margin-right: 0.1rem; border-radius: 0.5rem; transition: color 0.15s;">
+          <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' viewBox='0 0 24 24'><path d='M3 6h18M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>
+        </button>
+        <span class="copied-msg" id="copied-${link.id}" style="color: #10b981; font-size: 0.85em; margin-left: 0.5rem; display: none;">Copied!</span>
+      </div>
+    </div>
+  `).join('');
 
-// Allow Enter key to submit
-companyInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") {
-    titleInput.focus();
-  }
-});
+  // Add event listeners for copy and delete, and only change icon color on hover/focus
+  linksList.querySelectorAll('.copy').forEach(btn => {
+    btn.addEventListener('mouseenter', () => btn.style.color = '#10b981');
+    btn.addEventListener('mouseleave', () => btn.style.color = 'var(--primary)');
+    btn.addEventListener('focus', () => btn.style.color = '#10b981');
+    btn.addEventListener('blur', () => btn.style.color = 'var(--primary)');
+    btn.addEventListener('click', (e) => {
+      const id = btn.getAttribute('data-id');
+      const link = links.find(l => l.id === id);
+      if (link) {
+        navigator.clipboard.writeText(link.url).then(() => {
+          const msg = document.getElementById(`copied-${id}`);
+          if (msg) {
+            msg.style.display = 'inline';
+            setTimeout(() => { msg.style.display = 'none'; }, 1200);
+          }
+        });
+      }
+    });
+  });
+  linksList.querySelectorAll('.delete').forEach(btn => {
+    btn.addEventListener('mouseenter', () => btn.style.color = '#ef4444');
+    btn.addEventListener('mouseleave', () => btn.style.color = 'var(--destructive)');
+    btn.addEventListener('focus', () => btn.style.color = '#ef4444');
+    btn.addEventListener('blur', () => btn.style.color = 'var(--destructive)');
+    btn.addEventListener('click', (e) => {
+      const id = btn.getAttribute('data-id');
+      deleteLink(id);
+    });
+  });
+}
 
-titleInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") {
-    addJob();
-  }
-});
+function addLink(label, url) {
+  chrome.storage.local.get(['quickLinks'], (data) => {
+    const links = data.quickLinks || [];
+    links.push({
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      label: label.trim(),
+      url: url.trim()
+    });
+    chrome.storage.local.set({ quickLinks: links }, loadLinks);
+  });
+}
 
-// Load jobs when popup opens
-document.addEventListener("DOMContentLoaded", loadJobs);
-
-window.deleteJob = deleteJob; 
+function deleteLink(id) {
+  chrome.storage.local.get(['quickLinks'], (data) => {
+    let links = data.quickLinks || [];
+    links = links.filter(link => link.id !== id);
+    chrome.storage.local.set({ quickLinks: links }, loadLinks);
+  });
+} 
